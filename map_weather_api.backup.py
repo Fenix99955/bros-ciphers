@@ -683,138 +683,6 @@ def serve_map_interface():
                 color: #e9f9ff;
             }
 
-            .search-container {
-                margin-bottom: 16px;
-                position: relative;
-            }
-
-            .search-box {
-                width: 100%;
-                padding: 10px 14px;
-                border: 1px solid rgba(125, 211, 252, 0.2);
-                border-radius: 12px;
-                background: rgba(8, 17, 25, 0.8);
-                color: var(--text);
-                font-size: 0.9rem;
-                outline: none;
-                transition: border-color 0.2s, box-shadow 0.2s;
-            }
-
-            .search-box:focus {
-                border-color: rgba(125, 211, 252, 0.6);
-                box-shadow: 0 0 12px rgba(125, 211, 252, 0.2);
-            }
-
-            .search-results {
-                position: absolute;
-                top: 100%;
-                left: 0;
-                right: 0;
-                background: rgba(8, 17, 25, 0.95);
-                border: 1px solid rgba(125, 211, 252, 0.2);
-                border-top: none;
-                border-radius: 0 0 12px 12px;
-                max-height: 200px;
-                overflow-y: auto;
-                z-index: 1000;
-                display: none;
-            }
-
-            .search-results.active {
-                display: block;
-            }
-
-            .search-result-item {
-                padding: 10px 12px;
-                cursor: pointer;
-                border-bottom: 1px solid rgba(255,255,255,0.04);
-                font-size: 0.85rem;
-                color: var(--text);
-                transition: background 0.2s;
-            }
-
-            .search-result-item:hover {
-                background: rgba(125, 211, 252, 0.1);
-            }
-
-            .disaster-section {
-                margin-top: 16px;
-                padding: 12px 12px;
-                background: rgba(14, 23, 33, 0.8);
-                border: 1px solid rgba(248, 113, 113, 0.15);
-                border-radius: 14px;
-            }
-
-            .disaster-header {
-                display: flex;
-                align-items: center;
-                gap: 8px;
-                margin-bottom: 10px;
-                font-size: 0.76rem;
-                text-transform: uppercase;
-                letter-spacing: 0.08em;
-                color: var(--muted);
-            }
-
-            .disaster-alerts {
-                max-height: 150px;
-                overflow-y: auto;
-                font-size: 0.8rem;
-            }
-
-            .disaster-alert-item {
-                padding: 8px;
-                margin-bottom: 8px;
-                background: rgba(248, 113, 113, 0.12);
-                border: 1px solid rgba(248, 113, 113, 0.2);
-                border-radius: 8px;
-                color: #ffd4d4;
-                line-height: 1.5;
-            }
-
-            .disaster-alert-item .type {
-                font-weight: 700;
-                color: #ff9999;
-            }
-
-            .disaster-none {
-                color: var(--muted);
-                font-size: 0.8rem;
-                padding: 8px;
-            }
-
-            .wind-controls {
-                display: flex;
-                gap: 10px;
-                margin-top: 12px;
-            }
-
-            .toggle-btn {
-                flex: 1;
-                padding: 10px 12px;
-                border: 1px solid rgba(125, 211, 252, 0.2);
-                border-radius: 10px;
-                background: rgba(8, 17, 25, 0.8);
-                color: var(--cyan);
-                font-size: 0.75rem;
-                font-weight: 600;
-                cursor: pointer;
-                transition: all 0.2s;
-                text-transform: uppercase;
-                letter-spacing: 0.08em;
-            }
-
-            .toggle-btn:hover {
-                background: rgba(125, 211, 252, 0.1);
-                border-color: rgba(125, 211, 252, 0.4);
-            }
-
-            .toggle-btn.active {
-                background: rgba(125, 211, 252, 0.2);
-                border-color: rgba(125, 211, 252, 0.6);
-                box-shadow: 0 0 12px rgba(125, 211, 252, 0.3);
-            }
-
             .button-toolbar {
                 display: flex;
                 gap: 10px;
@@ -935,11 +803,6 @@ def serve_map_interface():
                     <div class="pill">MOSDAC</div>
                 </div>
 
-                <div class="search-container">
-                    <input type="text" id="city_search" class="search-box" placeholder="🔍 Search city..." />
-                    <div class="search-results" id="search_results"></div>
-                </div>
-
                 <div class="summary-grid">
                     <div class="card small">
                         <span class="label">Temp</span>
@@ -1011,18 +874,8 @@ def serve_map_interface():
                     </div>
                 </div>
 
-                <div class="disaster-section">
-                    <div class="disaster-header">
-                        <span>⚠️ Disaster Alerts (GDACS)</span>
-                    </div>
-                    <div class="disaster-alerts" id="disaster_alerts">
-                        <div class="disaster-none">No active alerts in this region</div>
-                    </div>
-                </div>
-
-                <div class="wind-controls">
+                <div class="button-toolbar">
                     <button id="process_btn" disabled onclick="executeBackendPipeline()">Run Forecast</button>
-                    <button id="wind_toggle_btn" onclick="toggleWindProfile()" class="toggle-btn">🌪️ Wind</button>
                 </div>
 
                 <pre class="mini-output" id="json_output">Click any point on the map to fetch live weather, forecast temperature, and detect anomalies.</pre>
@@ -1056,9 +909,6 @@ def serve_map_interface():
             let activeMarker = null;
             let selectedLat = null;
             let selectedLon = null;
-            let windProfileActive = false;
-            let windArrows = [];
-            
 
             function setBadge(mode) {
                 const badge = document.getElementById('status_badge');
@@ -1069,87 +919,6 @@ def serve_map_interface():
                 } else {
                     badge.textContent = 'Stable';
                     badge.className = 'badge normal';
-                }
-            }
-
-
-
-            async function searchCities(query) {
-                if (query.length < 2) {
-                    document.getElementById('search_results').classList.remove('active');
-                    return;
-                }
-                try {
-                    const response = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(query)}&format=json&limit=5`);
-                    const data = await response.json();
-                    const resultsDiv = document.getElementById('search_results');
-                    resultsDiv.innerHTML = '';
-                    if (data.length === 0) {
-                        resultsDiv.classList.remove('active');
-                        return;
-                    }
-                    data.forEach(item => {
-                        const div = document.createElement('div');
-                        div.className = 'search-result-item';
-                        div.textContent = item.display_name.substring(0, 60);
-                        div.onclick = () => {
-                            updateSelection(parseFloat(item.lat), parseFloat(item.lon));
-                            resultsDiv.classList.remove('active');
-                        };
-                        resultsDiv.appendChild(div);
-                    });
-                    resultsDiv.classList.add('active');
-                } catch (error) {
-                    console.error('Search error:', error);
-                }
-            }
-
-            document.getElementById('city_search').addEventListener('input', (e) => {
-                searchCities(e.target.value);
-            });
-
-            async function fetchDisasterAlerts(lat, lon) {
-                try {
-                    const response = await fetch(`https://www.gdacs.org/gdacsapi/api/events/geteventlist?lon=${lon}&lat=${lat}&radius=500&limit=5&format=json`);
-                    const data = await response.json();
-                    const alertsDiv = document.getElementById('disaster_alerts');
-                    alertsDiv.innerHTML = '';
-                    if (!data.events || data.events.length === 0) {
-                        alertsDiv.innerHTML = '<div class="disaster-none">No active alerts in this region</div>';
-                        return;
-                    }
-                    data.events.forEach(event => {
-                        const alertDiv = document.createElement('div');
-                        alertDiv.className = 'disaster-alert-item';
-                        const type = event.eventtype || 'Unknown';
-                        const name = event.name || 'No name';
-                        const date = event.date ? new Date(event.date).toLocaleDateString() : 'Unknown';
-                        alertDiv.innerHTML = `<span class="type">${type}</span><br/>${name}<br/>Date: ${date}`;
-                        alertsDiv.appendChild(alertDiv);
-                    });
-                } catch (error) {
-                    console.error('Disaster alert error:', error);
-                    document.getElementById('disaster_alerts').innerHTML = '<div class="disaster-none">Error fetching alerts</div>';
-                }
-            }
-
-            function toggleWindProfile() {
-                windProfileActive = !windProfileActive;
-                const btn = document.getElementById('wind_toggle_btn');
-                btn.classList.toggle('active');
-                if (windProfileActive) {
-                    const windSpeed = parseFloat(document.getElementById('wind_display').textContent) || 10;
-                    const angle = Math.random() * 360;
-                    const arrowIcon = L.divIcon({
-                        html: `<div style="transform: rotate(${angle}deg); font-size: 20px; text-shadow: 0 0 5px rgba(125,211,252,0.8);">→</div>`,
-                        iconSize: [20, 20],
-                        className: 'wind-arrow'
-                    });
-                    const marker = L.marker([selectedLat, selectedLon], { icon: arrowIcon }).addTo(map);
-                    windArrows.push(marker);
-                } else {
-                    windArrows.forEach(marker => map.removeLayer(marker));
-                    windArrows = [];
                 }
             }
 
@@ -1179,7 +948,6 @@ def serve_map_interface():
                 }
 
                 executeBackendPipeline();
-                fetchDisasterAlerts(lat, lng);
             }
 
             map.on('click', function (event) {
